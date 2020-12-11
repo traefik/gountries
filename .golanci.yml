@@ -1,0 +1,54 @@
+run:
+  deadline: 2m
+  skip-files: []
+
+linters-settings:
+  govet:
+    check-shadowing: true
+
+  gocyclo:
+    min-complexity: 12
+
+  maligned:
+    suggest-new: true
+
+  goconst:
+    min-len: 3
+    min-occurrences: 3
+
+  misspell:
+    locale: US
+
+  funlen:
+    lines: 70
+    statements: 40
+
+linters:
+  enable-all: true
+  disable:
+    - maligned
+    - lll
+    - dupl
+    - wsl
+    - prealloc
+    - gomnd
+    - testpackage
+    - goerr113
+    - nlreturn
+    - gosec
+    - exhaustivestruct
+    - tparallel
+    - paralleltest
+    - gochecknoglobals
+
+issues:
+  exclude-use-default: false
+  max-per-linter: 0
+  max-same-issues: 0
+  exclude:
+    - 'ST1000: at least one file in a package should have a package comment'
+  exclude-rules:
+    - path: query.go
+      text: >-
+        (cognitive|cyclomatic) complexity (\d+) of func
+        `\(Query\).FindCountries` is high
