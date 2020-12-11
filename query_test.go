@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestFindCountryByName(t *testing.T) {
@@ -82,10 +83,7 @@ func TestFindCountryByAlpha(t *testing.T) {
 	//
 
 	result, err = query.FindCountryByAlpha("se")
-
-	if err != nil {
-		t.Fail()
-	}
+	require.NoError(t, err)
 
 	assert.Equal(t, result.Alpha2, "SE", "Lowercase country names should match")
 
@@ -93,10 +91,7 @@ func TestFindCountryByAlpha(t *testing.T) {
 	//
 
 	result, err = query.FindCountryByAlpha("SE")
-
-	if err != nil {
-		t.Fail()
-	}
+	require.NoError(t, err)
 
 	assert.Equal(t, result.Alpha2, "SE", "Uppercase country names should match")
 
@@ -104,10 +99,7 @@ func TestFindCountryByAlpha(t *testing.T) {
 	//
 
 	result, err = query.FindCountryByAlpha("Se")
-
-	if err != nil {
-		t.Fail()
-	}
+	require.NoError(t, err)
 
 	assert.Equal(t, result.Alpha2, "SE", "Invariants of country names, eg sWeden,SWEDEN,swEdEn should match")
 
@@ -115,38 +107,24 @@ func TestFindCountryByAlpha(t *testing.T) {
 	//
 
 	result, err = query.FindCountryByAlpha("SEE")
+	require.Error(t, err)
 
-	if err != nil {
-		assert.EqualError(t, err, "gountries error. Could not find country with code: SEE")
-
-	} else {
-		t.Fail()
-	}
+	assert.EqualError(t, err, "gountries error. Could not find country with code: SEE")
 
 	// Test for wrong code types: too long
 	//
 
 	result, err = query.FindCountryByAlpha("SEEE")
+	require.Error(t, err)
 
-	if err != nil {
-		assert.EqualError(t, err, "gountries error. Invalid code format: SEEE")
-
-	} else {
-		t.Fail()
-	}
+	assert.EqualError(t, err, "gountries error. Invalid code format: SEEE")
 
 	// Test for wrong code types: too short
 	//
 
 	result, err = query.FindCountryByAlpha("S")
-
-	if err != nil {
-		assert.EqualError(t, err, "gountries error. Invalid code format: S")
-
-	} else {
-		t.Fail()
-	}
-
+	require.Error(t, err)
+	assert.EqualError(t, err, "gountries error. Invalid code format: S")
 }
 
 func TestFindAllCountries(t *testing.T) {
@@ -200,27 +178,17 @@ func TestFindCountriesBySubRegion(t *testing.T) {
 }
 
 func TestFindCountryByNativeName(t *testing.T) {
-
-	var result Country
-	var err error
-
 	// Test for common name
 	//
 
-	result, err = query.FindCountryByNativeName("Sverige")
-
-	if err != nil {
-		t.Fail()
-	}
+	result, err := query.FindCountryByNativeName("Sverige")
+	require.NoError(t, err)
 
 	assert.Equal(t, result.Alpha2, "SE", "Common native country names should match")
 
 	// Test for common name
 	result, err = query.FindCountryByNativeName("Konungariket Sverige")
-
-	if err != nil {
-		t.Fail()
-	}
+	require.NoError(t, err)
 
 	assert.Equal(t, result.Alpha2, "SE", "Official native country names should match")
 
@@ -228,21 +196,14 @@ func TestFindCountryByNativeName(t *testing.T) {
 	//
 
 	result, err = query.FindCountryByNativeName("sverige")
-
-	if err != nil {
-		t.Fail()
-	}
-
+	require.NoError(t, err)
 	assert.Equal(t, result.Alpha2, "SE", "Uppercase native country names should match")
 
 	// Test for uppercase
 	//
 
 	result, err = query.FindCountryByNativeName("SVERIGE")
-
-	if err != nil {
-		t.Fail()
-	}
+	require.NoError(t, err)
 
 	assert.Equal(t, result.Alpha2, "SE", "Uppercase native country names should match")
 
@@ -252,23 +213,16 @@ func TestFindCountryByNativeName(t *testing.T) {
 	invariants := []string{"sVEriGE", "SveRIge", "SVErige"}
 
 	for _, invariant := range invariants {
-
 		result, err = query.FindCountryByNativeName(invariant)
-
-		if err != nil {
-			t.Fail()
-		}
+		require.NoError(t, err)
 
 		assert.Equal(t, result.Alpha2, "SE", fmt.Sprintf("Invariants of native country names, eg sVEriGE,SveRIge,SVErige should match. %s did not match", invariant))
-
 	}
-
 }
 
-func ExampleFindCountriesBorderingCountries() {
+func ExampleQuery_FindAllCountries_borderingCountries() {
 
 	country := Country{}
-	//country.Alpha3 = "AUT"
 	country.Borders = []string{
 		"DEU",
 	}
@@ -296,7 +250,7 @@ func ExampleFindCountriesBorderingCountries() {
 
 }
 
-func ExampleFindCountriesBorderingCountries2() {
+func ExampleQuery_FindAllCountries_borderingCountries2() {
 
 	country := Country{
 		Borders: []string{
