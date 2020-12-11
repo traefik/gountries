@@ -7,20 +7,16 @@ import (
 	"path/filepath"
 	"strings"
 
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
-// New creates an Query object and unmarshals the json file.
+// New creates an Query object and unmarshal the json file.
 func New() *Query {
-
-	dataPath := filepath.Join("data", "yaml")
-
-	return NewFromPath(dataPath)
+	return NewFromPath(filepath.Join("data", "yaml"))
 }
 
-// NewFromPath creates a Query object from data folder in provided path
+// NewFromPath creates a Query object from data folder in provided path.
 func NewFromPath(dataPath string) *Query {
-
 	queryInitOnce.Do(func() {
 		queryInstance = &Query{
 			Countries: populateCountries(dataPath),
@@ -31,11 +27,14 @@ func NewFromPath(dataPath string) *Query {
 		queryInstance.NativeNameToAlpha2 = populateNativeNameIndex(queryInstance.Countries)
 
 		subdivisions := populateSubdivisions(dataPath)
+
 		for k := range queryInstance.Countries {
 			c := queryInstance.Countries[k]
+
 			c.subdivisions = subdivisions[strings.ToLower(c.Alpha2)]
 			c.nameToSubdivision = map[string]SubDivision{}
 			c.codeToSubdivision = map[string]SubDivision{}
+
 			for _, s := range c.subdivisions {
 				for _, n := range s.Names {
 					c.nameToSubdivision[strings.ToLower(n)] = s
@@ -43,6 +42,7 @@ func NewFromPath(dataPath string) *Query {
 				c.nameToSubdivision[strings.ToLower(s.Name)] = s
 				c.codeToSubdivision[strings.ToLower(s.Code)] = s
 			}
+
 			queryInstance.Countries[k] = c
 		}
 	})
@@ -52,160 +52,154 @@ func NewFromPath(dataPath string) *Query {
 
 func populateNameIndex(countries map[string]Country) map[string]string {
 	index := make(map[string]string)
+
 	for alpha2, country := range countries {
-		name := strings.ToLower(country.Name.Common)
-		officialName := strings.ToLower(country.Name.Official)
-		index[name] = alpha2
-		index[officialName] = alpha2
+		index[strings.ToLower(country.Name.Common)] = alpha2
+		index[strings.ToLower(country.Name.Official)] = alpha2
 	}
+
 	return index
 }
 
 func populateAlphaIndex(countries map[string]Country) map[string]string {
 	index := make(map[string]string)
+
 	for alpha2, country := range countries {
 		index[country.Codes.Alpha3] = alpha2
 	}
+
 	return index
 }
 
 func populateCountries(dataPath string) map[string]Country {
-
-	// Load countries into memory
-	//
-	//
-	var countries = make(map[string]Country)
-
-	countriesPath := path.Join(dataPath, "countries")
-
 	// Try packed data first before custom data directory
 	if yamlFileList, err := AssetDir("data/yaml/countries"); err == nil {
 		return populateCountriesFromPackedData(yamlFileList, "data/yaml/countries")
 	}
 
-	if info, err := ioutil.ReadDir(countriesPath); err == nil {
+	countriesPath := path.Join(dataPath, "countries")
 
-		var file []byte
+	info, err := ioutil.ReadDir(countriesPath)
+	if err != nil {
+		panic(fmt.Errorf("error loading Countries: %w", err))
+	}
 
-		for _, v := range info {
+	countries := make(map[string]Country)
 
-			if !v.IsDir() {
-
-				if file, err = ioutil.ReadFile(filepath.Join(countriesPath, v.Name())); err == nil {
-
-					country := Country{}
-					if err = yaml.Unmarshal(file, &country); err == nil {
-
-						// Save
-						countries[country.Codes.Alpha2] = country
-
-					}
-
-				}
-
-			}
-
+	for _, v := range info {
+		if v.IsDir() {
+			continue
 		}
 
-	} else {
-		panic(fmt.Errorf("Error loading Countries: %s", err))
+		var file []byte
+		file, err = ioutil.ReadFile(filepath.Join(countriesPath, v.Name()))
+		if err != nil {
+			continue
+		}
+
+		country := Country{}
+		err = yaml.Unmarshal(file, &country)
+		if err != nil {
+			continue
+		}
+
+		// Save
+		countries[country.Codes.Alpha2] = country
 	}
+
 	return countries
 }
 
 func populateCountriesFromPackedData(fileList []string, path string) map[string]Country {
-	var data []byte
-	var err error
-	var countries = make(map[string]Country)
+	countries := make(map[string]Country)
 
 	for _, yamlFile := range fileList {
-		var country Country
-		data, err = Asset(filepath.Join(path, yamlFile))
+		data, err := Asset(filepath.Join(path, yamlFile))
 		if err != nil {
 			continue
 		}
+
+		var country Country
 		if err = yaml.Unmarshal(data, &country); err != nil {
 			continue
 		}
+
 		countries[country.Codes.Alpha2] = country
 	}
+
 	return countries
 }
 
-func populateSubdivisions(dataPath string) (list map[string][]SubDivision) {
-
-	// Load countries into memory
-	//
-
-	list = map[string][]SubDivision{}
-
-	subdivisionsPath := path.Join(dataPath, "subdivisions")
-
+func populateSubdivisions(dataPath string) map[string][]SubDivision {
 	// Try packed data first before custom data directory
 	if yamlFileList, err := AssetDir("data/yaml/subdivisions"); err == nil {
 		return populateSubdivisionsFromPackedData(yamlFileList, "data/yaml/subdivisions")
 	}
 
-	if info, err := ioutil.ReadDir(subdivisionsPath); err == nil {
+	subdivisionsPath := path.Join(dataPath, "subdivisions")
 
-		for _, v := range info {
-
-			if !v.IsDir() {
-
-				if file, err := ioutil.ReadFile(filepath.Join(subdivisionsPath, v.Name())); err == nil {
-
-					subdivisions := []SubDivision{}
-
-					if err := yaml.Unmarshal(file, &subdivisions); err == nil {
-
-						// Save
-						// subdivisions = append(subdivisions, subdivision...)
-						list[strings.Split(v.Name(), ".")[0]] = subdivisions
-					}
-
-				}
-
-			}
-
-		}
-
-	} else {
-		panic("Error loading Subdivisions")
+	info, err := ioutil.ReadDir(subdivisionsPath)
+	if err != nil {
+		panic(fmt.Errorf("error loading Subdivisions: %w", err))
 	}
 
-	return
-}
+	list := map[string][]SubDivision{}
 
-func populateSubdivisionsFromPackedData(fileList []string, path string) map[string][]SubDivision {
-	var data []byte
-	var err error
-	sd := make(map[string][]SubDivision)
+	for _, v := range info {
+		if v.IsDir() {
+			continue
+		}
 
-	for _, yamlFile := range fileList {
-		data, err = Asset(filepath.Join(path, yamlFile))
+		file, err := ioutil.ReadFile(filepath.Join(subdivisionsPath, v.Name()))
 		if err != nil {
 			continue
 		}
+
+		var subdivisions []SubDivision
+		err = yaml.Unmarshal(file, &subdivisions)
+		if err != nil {
+			continue
+		}
+
+		// Save
+		// subdivisions = append(subdivisions, subdivision...)
+		list[strings.Split(v.Name(), ".")[0]] = subdivisions
+	}
+
+	return list
+}
+
+func populateSubdivisionsFromPackedData(fileList []string, path string) map[string][]SubDivision {
+	sd := make(map[string][]SubDivision)
+
+	for _, yamlFile := range fileList {
+		data, err := Asset(filepath.Join(path, yamlFile))
+		if err != nil {
+			continue
+		}
+
 		var subdivisions []SubDivision
 		if err = yaml.Unmarshal(data, &subdivisions); err != nil {
 			continue
 		}
+
 		alpha2 := strings.Split(yamlFile, ".")[0]
 
 		sd[alpha2] = subdivisions
 	}
+
 	return sd
 }
 
 func populateNativeNameIndex(countries map[string]Country) map[string]string {
 	index := make(map[string]string)
+
 	for alpha2, country := range countries {
 		for _, nativeNames := range country.Name.Native {
-			nativeName := strings.ToLower(nativeNames.Common)
-			officialNativeName := strings.ToLower(nativeNames.Official)
-			index[nativeName] = alpha2
-			index[officialNativeName] = alpha2
+			index[strings.ToLower(nativeNames.Common)] = alpha2
+			index[strings.ToLower(nativeNames.Official)] = alpha2
 		}
 	}
+
 	return index
 }

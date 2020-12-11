@@ -8,25 +8,24 @@ import (
 )
 
 func TestSubdivisions(t *testing.T) {
-
 	se, err := query.FindCountryByAlpha("SWE")
 	require.NoError(t, err)
 
-	subd := se.SubDivisions()
+	subDiv := se.SubDivisions()
 
-	assert.Len(t, subd, 21)
+	assert.Len(t, subDiv, 21)
 
-	found, err := se.FindSubdivisionByName(subd[0].Name)
+	found, err := se.FindSubdivisionByName(subDiv[0].Name)
 	require.NoError(t, err)
-	assert.Equal(t, subd[0], found)
+	assert.Equal(t, subDiv[0], found)
 
-	for _, n := range subd[0].Names {
+	for _, n := range subDiv[0].Names {
 		found, err = se.FindSubdivisionByName(n)
 		require.NoError(t, err)
-		assert.Equal(t, subd[0], found)
+		assert.Equal(t, subDiv[0], found)
 	}
 
-	found, err = se.FindSubdivisionByCode(subd[0].Code)
+	found, err = se.FindSubdivisionByCode(subDiv[0].Code)
 	require.NoError(t, err)
-	assert.Equal(t, subd[0], found)
+	assert.Equal(t, subDiv[0], found)
 }
