@@ -10,16 +10,16 @@ All data is derived from the [pariz/countries](https://github.com/pariz/countrie
 
 *This is currently a work in progress, so things may change. More stuff will be added*
 
-# Installation
+## Installation
 
 ```
 go get github.com/pariz/gountries
 ```
 
-# Examples
+## Examples
 
+### Basic
 
-## Basic
 ```go
 
 import (
@@ -46,7 +46,9 @@ fmt.Println(sweden.Translations["DEU"].Official) // Output: Königreich Schweden
 
 
 ```
-## A bit more advanced
+
+### A bit more advanced
+
 ```go
 
 import (
@@ -137,7 +139,7 @@ fmt.Println(distance)
 
 ```
 
-# Using packed data
+## Using packed data
 
 The data in the `data/yaml` subdirectory is embedded using go-bindata.  Once you include this library in your project, you won't need to access the data directory.  To add or update the data, make changes to the YAML files then run:
 
@@ -145,11 +147,12 @@ The data in the `data/yaml` subdirectory is embedded using go-bindata.  Once you
 go-bindata -pkg gountries data/yaml/*
 ```
 
-# Testing
+## Testing
 
 Has a pretty solid test coverage but is constantly improving.
 
-# Todo
+## Todo
+
 - [ ] Province/County querying (partially complete)
 - [x] Measurement between coordinates
 - [ ] GeoJSON information
